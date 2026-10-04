@@ -7,14 +7,25 @@ import { Provider } from 'react-redux'
 import { store } from '@/store'
 import { useAppSelector } from '@/store/hooks'
 import { isMerchantRole } from '@/constants/roles'
+import { Colors } from '@/constants/theme'
 
 SplashScreen.preventAutoHideAsync()
+
+const LightNavTheme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, primary: Colors.light.primary, background: Colors.light.background },
+}
+const DarkNavTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, primary: Colors.dark.primary, background: Colors.dark.background },
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   return (
     <Provider store={store}>
       <PaperProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkNavTheme : LightNavTheme}>
           <AnimatedSplashOverlay />
           <RootNavigator />
         </ThemeProvider>
