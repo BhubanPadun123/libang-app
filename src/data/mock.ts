@@ -2,10 +2,11 @@
 import type { IconName } from '@/components/ui/icon'
 import type { Tone } from '@/components/ui/icon-bubble'
 
-export type OrderStatus = 'Pending' | 'Preparing' | 'On the way' | 'Delivered' | 'Cancelled'
+export type OrderStatus = 'Pending' | 'Confirmed' | 'Preparing' | 'On the way' | 'Delivered' | 'Cancelled'
 
 export const OrderStatusTone: Record<OrderStatus, Tone> = {
   Pending: 'warning',
+  Confirmed: 'info',
   Preparing: 'info',
   'On the way': 'primary',
   Delivered: 'success',

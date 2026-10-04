@@ -36,10 +36,21 @@ export class ApiError extends Error {
   }
 }
 
+export type PageMeta = {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasPrev: boolean
+  hasNext: boolean
+}
+
 type ApiEnvelope<T> = {
   success: boolean
   message?: string
   data?: T
+  /** Present on paginated list endpoints. */
+  meta?: PageMeta
 }
 
 type ApiRequest = {
@@ -49,7 +60,15 @@ type ApiRequest = {
 }
 
 /** Calls a Next.js route handler and unwraps its `{ success, message, data }` envelope. */
-export async function apiFetch<T>(path: string, { method = 'GET', body, token }: ApiRequest = {}): Promise<T> {
+export async function apiFetch<T>(path: string, request: ApiRequest = {}): Promise<T> {
+  return (await apiFetchPage<T>(path, request)).data
+}
+
+/** Like `apiFetch`, but also returns the paging `meta` that list endpoints send. */
+export async function apiFetchPage<T>(
+  path: string,
+  { method = 'GET', body, token }: ApiRequest = {},
+): Promise<{ data: T; meta?: PageMeta }> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
@@ -77,5 +96,5 @@ export async function apiFetch<T>(path: string, { method = 'GET', body, token }:
     throw new ApiError(json?.message || `Request failed (${response.status})`, response.status)
   }
 
-  return json.data as T
+  return { data: json.data as T, meta: json.meta }
 }

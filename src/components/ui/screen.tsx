@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { ThemedText } from '@/components/themed-text'
@@ -11,19 +11,37 @@ type ScreenProps = {
   subtitle?: string
   /** Element shown at the right of the header, e.g. an avatar or icon button. */
   headerRight?: ReactNode
+  /** Enables pull-to-refresh when set. */
+  onRefresh?: () => void
+  refreshing?: boolean
+  /** Turn off under a native stack header, which already clears the status bar. */
+  safeTop?: boolean
   children: ReactNode
 }
 
 /** Standard scrollable page with a large title header, safe-area and tab-bar insets. */
-export function Screen({ title, subtitle, headerRight, children }: ScreenProps) {
+export function Screen({
+  title,
+  subtitle,
+  headerRight,
+  onRefresh,
+  refreshing = false,
+  safeTop = true,
+  children,
+}: ScreenProps) {
   const theme = useTheme()
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={safeTop ? ['top'] : []} style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />
+          ) : undefined
+        }>
         <View style={styles.inner}>
           {title || headerRight ? (
             <View style={styles.header}>
