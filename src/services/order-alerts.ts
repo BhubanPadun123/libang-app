@@ -59,6 +59,20 @@ function loadNotifications() {
   return notifications
 }
 
+/** Title and body for an alert; riders see where to deliver and the cash to collect. */
+export function alertText(order: OrderNotification) {
+  if (order.kind === 'delivery') {
+    return {
+      title: `New delivery ${order.orderNumber} · collect ${formatPrice(order.total)}`,
+      body: `${order.customerName} · ${order.itemsSummary}`,
+    }
+  }
+  return {
+    title: `New order ${order.orderNumber} · ${formatPrice(order.total)}`,
+    body: `${order.customerName} → ${order.vendorName} · ${order.itemsSummary}`,
+  }
+}
+
 let chime: AudioPlayer | null = null
 
 function getChime() {
@@ -93,8 +107,7 @@ export async function playOrderAlert(order: OrderNotification) {
 
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: `New order ${order.orderNumber} · ${formatPrice(order.total)}`,
-      body: `${order.customerName} → ${order.vendorName} · ${order.itemsSummary}`,
+      ...alertText(order),
       sound: 'default',
       data: { orderId: order.id },
     },

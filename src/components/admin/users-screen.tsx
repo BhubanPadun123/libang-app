@@ -17,6 +17,7 @@ const Filters = {
   'Store owners': 'STORE_OWNER',
   'Restaurant owners': 'RESTAURANT_OWNER',
   'Room owners': 'ROOM_OWNER',
+  'Delivery partners': 'DELIVERY_PARTNER',
   Admins: 'ADMIN',
   'Super admins': 'SUPER_ADMIN',
 } as const satisfies Record<string, ServerRole | 'ALL'>

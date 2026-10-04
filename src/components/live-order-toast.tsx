@@ -12,7 +12,7 @@ import { MaxContentWidth, Radius, Spacing } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { toastDismissed } from '@/store/slices/notifications-slice'
-import { formatPrice } from '@/utils/format'
+import { alertText } from '@/services/order-alerts'
 
 const VISIBLE_MS = 5_000
 
@@ -31,6 +31,7 @@ export function LiveOrderToast() {
   }, [order, dispatch])
 
   if (!order) return null
+  const text = alertText(order)
 
   const open = () => {
     dispatch(toastDismissed())
@@ -47,7 +48,7 @@ export function LiveOrderToast() {
       style={[styles.wrapper, { top: insets.top + Spacing.two }]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`New order ${order.orderNumber} from ${order.customerName}. Open orders.`}
+        accessibilityLabel={`${text.title}. ${text.body}. Open.`}
         accessibilityLiveRegion="polite"
         onPress={open}
         style={({ pressed }) => [
@@ -58,10 +59,10 @@ export function LiveOrderToast() {
         <IconBubble icon={{ sf: 'bell.badge.fill', md: 'notifications_active' }} tone="primary" />
         <View style={styles.text}>
           <ThemedText type="smallBold" numberOfLines={1}>
-            New order {order.orderNumber} · {formatPrice(order.total)}
+            {text.title}
           </ThemedText>
           <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
-            {order.customerName} → {order.vendorName} · {order.itemsSummary}
+            {text.body}
           </ThemedText>
         </View>
         <Pressable

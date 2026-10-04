@@ -23,9 +23,11 @@ type OrderCardProps = {
   details?: string
   /** Action buttons rendered in the card footer. */
   actions?: ReactNode
+  /** Free-form content under the actions, e.g. contacts or an assignment picker. */
+  footer?: ReactNode
 }
 
-export function OrderCard({ id, title, items, total, status, time, icon, details, actions }: OrderCardProps) {
+export function OrderCard({ id, title, items, total, status, time, icon, details, actions, footer }: OrderCardProps) {
   const theme = useTheme()
   return (
     <Card>
@@ -52,6 +54,7 @@ export function OrderCard({ id, title, items, total, status, time, icon, details
         </ThemedText>
       ) : null}
       {actions ? <View style={styles.actions}>{actions}</View> : null}
+      {footer ? <View style={styles.footerSlot}>{footer}</View> : null}
     </Card>
   )
 }
@@ -79,6 +82,10 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  footerSlot: {
     gap: Spacing.two,
     marginTop: Spacing.two,
   },

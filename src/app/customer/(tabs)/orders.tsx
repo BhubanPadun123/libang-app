@@ -39,7 +39,8 @@ export default function CustomerOrdersScreen() {
           title={o.items.length === 1 ? o.items[0].name : `${o.items.length} items`}
           items={describeItems(o)}
           total={o.totalAmount}
-          status={OrderStatusLabel[o.status]}
+          // Once the rider has it, the customer cares that it's on the way.
+          status={o.delivery?.status === 'PICKED_UP' && isActive(o) ? 'On the way' : OrderStatusLabel[o.status]}
           time={formatOrderDate(o.createdAt)}
           icon={ListingIcon[o.items[0]?.listingType ?? 'PRODUCT']}
         />

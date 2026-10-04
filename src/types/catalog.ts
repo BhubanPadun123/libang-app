@@ -78,7 +78,13 @@ export type DeliveryAddress = {
   city: string
   state: string
   pincode: string
+  /** From the customer's device at checkout, when they shared it. */
+  latitude?: number
+  longitude?: number
 }
+
+/** The delivery partner's progress, separate from the sellers' order status. */
+export type DeliveryStatus = 'ASSIGNED' | 'PICKED_UP' | 'DELIVERED'
 
 export type ServerOrderStatus = 'PENDING' | 'CONFIRMED' | 'DELIVERED' | 'CANCELLED'
 
@@ -103,5 +109,6 @@ export type CustomerOrder = {
   deliveryAddress: DeliveryAddress
   paymentMethod: 'COD'
   status: ServerOrderStatus
+  delivery?: { status: DeliveryStatus }
   createdAt: string
 }

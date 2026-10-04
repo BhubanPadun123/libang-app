@@ -9,6 +9,7 @@ export const ServerRoleLabel: Record<ServerRole, string> = {
   ADMIN: 'Admin',
   SUPER_ADMIN: 'Super admin',
   STUFT: 'Staff',
+  DELIVERY_PARTNER: 'Delivery partner',
 }
 
 export const ServerRoleTone: Record<ServerRole, Tone> = {
@@ -19,6 +20,7 @@ export const ServerRoleTone: Record<ServerRole, Tone> = {
   ADMIN: 'success',
   SUPER_ADMIN: 'danger',
   STUFT: 'neutral',
+  DELIVERY_PARTNER: 'success',
 }
 
 /** Roles a super admin can assign from the app. */
@@ -27,6 +29,7 @@ export const AssignableRoles: ServerRole[] = [
   'STORE_OWNER',
   'RESTAURANT_OWNER',
   'ROOM_OWNER',
+  'DELIVERY_PARTNER',
   'ADMIN',
   'SUPER_ADMIN',
 ]

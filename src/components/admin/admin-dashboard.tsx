@@ -59,7 +59,15 @@ export function AdminDashboard({ subtitle, partnersHref, ordersHref, clearsOrder
           <StatGrid
             stats={[
               { label: 'Orders', value: String(s.allOrders), icon: { sf: 'bag.fill', md: 'shopping_bag' }, tone: 'primary' },
-              { label: 'Revenue', value: formatPrice(s.revenue), icon: { sf: 'banknote.fill', md: 'payments' }, tone: 'success' },
+              // The server sends no revenue to admins; they see the review queue in its place.
+              s.revenue !== null
+                ? { label: 'Revenue', value: formatPrice(s.revenue), icon: { sf: 'banknote.fill', md: 'payments' }, tone: 'success' }
+                : {
+                    label: 'Partners to review',
+                    value: String(s.pendingReviews),
+                    icon: { sf: 'storefront.fill', md: 'storefront' },
+                    tone: s.pendingReviews ? 'warning' : 'neutral',
+                  },
               {
                 label: 'Active orders now',
                 value: String(s.activeOrders),

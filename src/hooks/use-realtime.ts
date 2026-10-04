@@ -11,9 +11,9 @@ import { signOut } from '@/store/slices/auth-slice'
 import { connectionChanged, orderReceived } from '@/store/slices/notifications-slice'
 import { sessionEnded } from '@/store/slices/session-slice'
 
-/** Roles that get a live alert when a customer places an order. */
+/** Roles that get a live alert when a customer places an order (or, for riders, when one is assigned). */
 export function receivesOrderAlerts(role: Role | undefined) {
-  return role === 'admin' || role === 'super_admin' || isMerchantRole(role)
+  return role === 'admin' || role === 'super_admin' || role === 'delivery' || isMerchantRole(role)
 }
 
 const RevokedMessage: Record<RevokeReason, string> = {
@@ -49,6 +49,25 @@ export function useRealtime() {
         if (rung.has(order.id)) return
         rung.add(order.id)
         playOrderAlert(order).catch(() => {})
+      },
+      onDeliveryAssigned: (assignment) => {
+        if (role !== 'delivery') return
+        dispatch(customerApi.util.invalidateTags(['Deliveries']))
+        // Shown and rung like an order, so the rider notices it the same way.
+        const alert = {
+          id: `delivery:${assignment.orderId}`,
+          orderNumber: assignment.orderNumber,
+          customerName: assignment.customerName,
+          vendorName: 'Delivery',
+          itemsSummary: assignment.dropAddress,
+          total: assignment.total,
+          createdAt: new Date().toISOString(),
+          kind: 'delivery' as const,
+        }
+        dispatch(orderReceived(alert))
+        if (rung.has(alert.id)) return
+        rung.add(alert.id)
+        playOrderAlert(alert).catch(() => {})
       },
       onSessionRevoked: (reason) => {
         dispatch(sessionEnded(RevokedMessage[reason]))

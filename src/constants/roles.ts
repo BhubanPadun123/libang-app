@@ -33,6 +33,7 @@ export function ordersRoute(role: Role | undefined): Href | null {
   if (role === 'admin') return '/admin/orders'
   if (role === 'super_admin') return '/super-admin'
   if (isMerchantRole(role)) return '/merchant/orders'
+  if (role === 'delivery') return '/delivery/tasks'
   return null
 }
 

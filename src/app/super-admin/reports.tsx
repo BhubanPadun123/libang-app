@@ -35,6 +35,8 @@ export default function SuperAdminReportsScreen() {
   const [range, setRange] = useState<RangeLabel>('30 days')
   const stats = useGetAdminStatsQuery(Ranges[range])
   const s = stats.data
+  // Always present for super admins; null only for admins, who can't open this tab.
+  const revenue = s?.revenue ?? 0
 
   return (
     <Screen
@@ -49,7 +51,7 @@ export default function SuperAdminReportsScreen() {
         <>
           <StatGrid
             stats={[
-              { label: 'Revenue', value: formatPrice(s.revenue), icon: { sf: 'banknote.fill', md: 'payments' }, tone: 'success' },
+              { label: 'Revenue', value: formatPrice(revenue), icon: { sf: 'banknote.fill', md: 'payments' }, tone: 'success' },
               { label: 'Orders', value: String(s.allOrders), icon: { sf: 'bag.fill', md: 'shopping_bag' }, tone: 'primary' },
               {
                 label: 'New users',
@@ -60,7 +62,7 @@ export default function SuperAdminReportsScreen() {
               },
               {
                 label: 'Avg. order value',
-                value: s.allOrders ? formatPrice(Math.round(s.revenue / s.allOrders)) : '—',
+                value: s.allOrders ? formatPrice(Math.round(revenue / s.allOrders)) : '—',
                 icon: { sf: 'chart.bar.fill', md: 'bar_chart' },
                 tone: 'neutral',
               },

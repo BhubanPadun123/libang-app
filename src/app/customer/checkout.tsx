@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/screen'
 import { Section } from '@/components/ui/section'
 import { TextField } from '@/components/ui/text-field'
 import { Radius, Spacing } from '@/constants/theme'
+import { useCurrentLocation, type PinnedLocation } from '@/hooks/use-current-location'
 import { useTheme } from '@/hooks/use-theme'
 import { errorMessage, useGetCartQuery, usePlaceOrderMutation } from '@/store/customer-api'
 import { useAppSelector } from '@/store/hooks'
@@ -40,7 +41,23 @@ export default function CheckoutScreen() {
     pincode: '',
   })
   const [error, setError] = useState<string | null>(null)
+  const [pin, setPin] = useState<PinnedLocation | null>(null)
+  const location = useCurrentLocation()
   const set = (field: keyof DeliveryAddress) => (value: string) => setAddress((a) => ({ ...a, [field]: value }))
+
+  const useMyLocation = async () => {
+    const found = await location.locate()
+    if (!found) return
+    setPin(found)
+    // Only fill fields the customer left empty, so typed details aren't overwritten.
+    setAddress((a) => ({
+      ...a,
+      address: a.address || found.address?.line || '',
+      city: a.city || found.address?.city || '',
+      state: a.state || found.address?.state || '',
+      pincode: a.pincode || found.address?.pincode || '',
+    }))
+  }
 
   const charges = cart.data?.charges
 
@@ -49,7 +66,11 @@ export default function CheckoutScreen() {
     setError(invalid)
     if (invalid) return
     try {
-      await placeOrder({ ...address, phone: address.phone.trim() }).unwrap()
+      await placeOrder({
+        ...address,
+        phone: address.phone.trim(),
+        ...(pin && { latitude: pin.latitude, longitude: pin.longitude }),
+      }).unwrap()
       router.dismissTo('/customer/orders')
     } catch (e) {
       setError(errorMessage(e))
@@ -62,6 +83,27 @@ export default function CheckoutScreen() {
 
       <Section title="Deliver to">
         <Card style={styles.form}>
+          <View style={styles.row}>
+            <Icon
+              sf={pin ? 'mappin.circle.fill' : 'location.fill'}
+              md={pin ? 'where_to_vote' : 'my_location'}
+              size={20}
+              color={pin ? theme.success : theme.primary}
+            />
+            <ThemedText type="small" style={styles.flex} themeColor={pin ? 'success' : 'textSecondary'}>
+              {pin ? 'Location pinned. Your rider will see it on a map.' : 'Share your location so the rider can find you.'}
+            </ThemedText>
+            {pin ? (
+              <Button label="Remove" size="sm" variant="ghost" onPress={() => setPin(null)} />
+            ) : (
+              <Button label="Use my location" size="sm" variant="secondary" loading={location.loading} onPress={useMyLocation} />
+            )}
+          </View>
+          {location.error ? (
+            <ThemedText type="caption" themeColor="danger">
+              {location.error}
+            </ThemedText>
+          ) : null}
           <TextField
             label="Full name"
             icon={{ sf: 'person.fill', md: 'person' }}

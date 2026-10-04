@@ -24,14 +24,29 @@ export type OrderNotification = {
   total: number
   /** ISO timestamp. */
   createdAt: string
+  /** 'delivery' when this is an assignment to the signed-in delivery partner. */
+  kind?: 'order' | 'delivery'
+}
+
+/** Sent to a delivery partner when an admin assigns them an order. */
+export type DeliveryAssignment = {
+  orderId: string
+  orderNumber: string
+  customerName: string
+  dropAddress: string
+  total: number
 }
 
 export type RevokeReason = 'session_replaced' | 'unauthorized'
 
-type ServerMessage = { type: 'order:created'; data: OrderNotification } | { type: 'pong' }
+type ServerMessage =
+  | { type: 'order:created'; data: OrderNotification }
+  | { type: 'delivery:assigned'; data: DeliveryAssignment }
+  | { type: 'pong' }
 
 export type RealtimeHandlers = {
   onOrderCreated: (order: OrderNotification) => void
+  onDeliveryAssigned?: (assignment: DeliveryAssignment) => void
   onSessionRevoked: (reason: RevokeReason) => void
   onStatusChange?: (connected: boolean) => void
 }
@@ -73,6 +88,7 @@ export class RealtimeConnection {
     socket.onmessage = (event) => {
       const message = parse(event.data)
       if (message?.type === 'order:created') this.handlers.onOrderCreated(message.data)
+      if (message?.type === 'delivery:assigned') this.handlers.onDeliveryAssigned?.(message.data)
     }
 
     socket.onclose = (event) => {

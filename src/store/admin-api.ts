@@ -5,6 +5,7 @@ import type {
   AdminStats,
   AdminUser,
   Business,
+  DeliveryPartner,
   PlatformSettings,
   ServerRole,
   StatsRange,
@@ -97,6 +98,21 @@ export const adminApi = customerApi.injectEndpoints({
       invalidatesTags: ['Businesses'],
     }),
 
+    getDeliveryPartners: build.query<DeliveryPartner[], void>({
+      query: () => ({ path: '/api/admin/delivery-partners' }),
+      providesTags: ['DeliveryPartners'],
+    }),
+
+    /** `partnerId: null` takes the order back. */
+    assignDeliveryPartner: build.mutation<unknown, { orderId: string; partnerId: string | null }>({
+      query: ({ orderId, partnerId }) => ({
+        path: `/api/admin/orders/${encodeURIComponent(orderId)}/assign`,
+        method: 'POST',
+        body: { partnerId },
+      }),
+      invalidatesTags: ['AdminOrders', 'DeliveryPartners'],
+    }),
+
     getSettings: build.query<PlatformSettings, void>({
       query: () => ({ path: '/api/settings' }),
       providesTags: ['Settings'],
@@ -121,4 +137,6 @@ export const {
   useGoLiveMutation,
   useGetSettingsQuery,
   useUpdateSettingsMutation,
+  useGetDeliveryPartnersQuery,
+  useAssignDeliveryPartnerMutation,
 } = adminApi

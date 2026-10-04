@@ -72,6 +72,8 @@ export const customerApi = createApi({
     'AdminUsers',
     'Businesses',
     'Settings',
+    'DeliveryPartners',
+    'Deliveries',
   ],
   endpoints: (build) => ({
     getListings: build.query<Page<Listing>, ListingsArgs>({

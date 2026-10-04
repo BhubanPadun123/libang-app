@@ -1,4 +1,4 @@
-import type { Address, Charges, DeliveryAddress, OrderItem, ServerOrderStatus } from '@/types/catalog'
+import type { Address, Charges, DeliveryAddress, DeliveryStatus, OrderItem, ServerOrderStatus } from '@/types/catalog'
 
 /** User.role as stored by the backend. */
 export type ServerRole =
@@ -9,6 +9,7 @@ export type ServerRole =
   | 'ADMIN'
   | 'SUPER_ADMIN'
   | 'STUFT'
+  | 'DELIVERY_PARTNER'
 
 export type StatsRange = 'today' | '7d' | '30d' | '90d' | '365d' | 'all'
 
@@ -26,7 +27,8 @@ export type AdminStats = {
   foodOrders: number
   storeOrders: number
   allOrders: number
-  revenue: number
+  /** Null for admins: platform revenue is super-admin only. */
+  revenue: number | null
   activeOrders: number
   pendingReviews: number
   recentOrders: {
@@ -55,7 +57,17 @@ export type AdminOrder = {
   totalAmount: number
   deliveryAddress?: DeliveryAddress
   status: ServerOrderStatus
+  delivery?: { partner?: PersonRef; status: DeliveryStatus; assignedAt?: string }
   createdAt: string
+}
+
+export type DeliveryPartner = {
+  _id: string
+  name: string
+  phone?: string
+  email?: string
+  /** Assigned or picked up, not yet delivered. */
+  activeDeliveries: number
 }
 
 export type AdminUser = {

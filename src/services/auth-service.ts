@@ -11,6 +11,7 @@ type ServerRole =
   | 'ADMIN'
   | 'SUPER_ADMIN'
   | 'STUFT'
+  | 'DELIVERY_PARTNER'
 
 const ServerRoleMap: Partial<Record<ServerRole, Role>> = {
   CUSTOMER: 'customer',
@@ -19,6 +20,7 @@ const ServerRoleMap: Partial<Record<ServerRole, Role>> = {
   ROOM_OWNER: 'room_owner',
   ADMIN: 'admin',
   SUPER_ADMIN: 'super_admin',
+  DELIVERY_PARTNER: 'delivery',
 }
 
 type LoginResponse = {

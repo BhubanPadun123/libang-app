@@ -46,8 +46,9 @@ export function getMerchantTabs(role: MerchantRole): RoleTab[] {
 
 export const DeliveryTabs: RoleTab[] = [
   { name: 'index', label: 'Home', sf: 'bicycle', md: 'two_wheeler' },
-  { name: 'tasks', label: 'Deliveries', sf: 'map.fill', md: 'local_shipping' },
-  { name: 'earnings', label: 'Earnings', sf: 'banknote.fill', md: 'payments' },
+  { name: 'tasks', label: 'Deliveries', sf: 'map.fill', md: 'local_shipping', showsOrderBadge: true },
+  // Route file is still `earnings`; rider pay isn't tracked yet, so it shows a delivery summary.
+  { name: 'earnings', label: 'Summary', sf: 'chart.bar.fill', md: 'bar_chart' },
   { name: 'account', label: 'Account', sf: 'person.crop.circle.fill', md: 'person' },
 ]
 
