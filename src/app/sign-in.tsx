@@ -2,34 +2,19 @@ import { router } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 
 import { ThemedText } from '@/components/themed-text'
-import { Icon, type IconName } from '@/components/ui/icon'
-import type { Tone } from '@/components/ui/icon-bubble'
+import { Icon } from '@/components/ui/icon'
 import { ListCard, ListItem } from '@/components/ui/list-item'
 import { Screen } from '@/components/ui/screen'
-import { ROLES, RoleHome, RoleLabels, type Role } from '@/constants/roles'
+import { RoleMeta } from '@/constants/role-meta'
+import { ROLES, RoleLabels, type Role } from '@/constants/roles'
 import { Radius, Spacing } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
-import { useAppDispatch } from '@/store/hooks'
-import { signIn } from '@/store/slices/auth-slice'
 
-const RoleMeta: Record<Role, { description: string; icon: IconName; tone: Tone }> = {
-  customer: { description: 'Order food, groceries and book rooms', icon: { sf: 'person.fill', md: 'person' }, tone: 'primary' },
-  store_owner: { description: 'Sell products from your store', icon: { sf: 'storefront.fill', md: 'storefront' }, tone: 'info' },
-  restaurant_owner: { description: 'Manage your menu and orders', icon: { sf: 'fork.knife', md: 'restaurant' }, tone: 'success' },
-  room_owner: { description: 'List rooms and manage bookings', icon: { sf: 'bed.double.fill', md: 'hotel' }, tone: 'warning' },
-  delivery: { description: 'Pick up and deliver orders', icon: { sf: 'bicycle', md: 'two_wheeler' }, tone: 'primary' },
-  admin: { description: 'Operate partners, orders and users', icon: { sf: 'shield.fill', md: 'shield_person' }, tone: 'neutral' },
-  super_admin: { description: 'Full platform control', icon: { sf: 'crown.fill', md: 'admin_panel_settings' }, tone: 'danger' },
-}
-
-// TODO: replace the role picker with real authentication; the role should come from the API.
 export default function SignInScreen() {
   const theme = useTheme()
-  const dispatch = useAppDispatch()
 
-  const handleSignIn = (role: Role) => {
-    dispatch(signIn({ id: `dev-${role}`, name: `Demo ${RoleLabels[role]}`, role }))
-    router.replace(RoleHome[role])
+  const handleSelect = (role: Role) => {
+    router.push({ pathname: '/login', params: { role } })
   }
 
   return (
@@ -48,7 +33,7 @@ export default function SignInScreen() {
 
       <View style={styles.list}>
         <ThemedText type="smallBold" themeColor="textSecondary">
-          CONTINUE AS (DEMO)
+          CONTINUE AS
         </ThemedText>
         <ListCard>
           {ROLES.map((role) => (
@@ -58,7 +43,7 @@ export default function SignInScreen() {
               subtitle={RoleMeta[role].description}
               icon={RoleMeta[role].icon}
               iconTone={RoleMeta[role].tone}
-              onPress={() => handleSignIn(role)}
+              onPress={() => handleSelect(role)}
             />
           ))}
         </ListCard>
