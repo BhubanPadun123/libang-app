@@ -34,7 +34,7 @@ export function useRealtime() {
 
     const alerts = receivesOrderAlerts(role)
     // Ask for notification permission up front so the first order isn't silent.
-    if (alerts) void prepareOrderAlerts()
+    if (alerts) prepareOrderAlerts()
 
     // The server may resend an order after a reconnect; ring once per order.
     const rung = new Set<string>()

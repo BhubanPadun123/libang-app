@@ -1,66 +1,95 @@
-import * as Notifications from 'expo-notifications'
+import { isRunningInExpoGo } from 'expo'
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio'
 import { AppState, Platform } from 'react-native'
 
 import type { OrderNotification } from '@/services/realtime'
 import { formatPrice } from '@/utils/format'
 
+type NotificationsModule = typeof import('expo-notifications')
+
 const CHANNEL_ID = 'orders'
 
-// expo-notifications has no web support; the in-app banner still shows there, silently.
-const supported = Platform.OS !== 'web'
+/**
+ * System notifications need expo-notifications, which has no web support and logs an error
+ * as soon as it's imported in Expo Go on Android (SDK 53+). There, only the in-app chime plays.
+ */
+const systemNotificationsSupported =
+  Platform.OS !== 'web' && !(Platform.OS === 'android' && isRunningInExpoGo())
 
-if (supported) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => {
-      // In the foreground the in-app banner already shows the order, so only play the sound.
-      const foreground = AppState.currentState === 'active'
-      return {
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-        shouldShowBanner: !foreground,
-        shouldShowList: true,
+let notifications: Promise<NotificationsModule | null> | null = null
+
+/** Loads expo-notifications on first use, so unsupported environments never import it. */
+function loadNotifications() {
+  if (!systemNotificationsSupported) return Promise.resolve(null)
+
+  notifications ??= import('expo-notifications')
+    .then(async (Notifications) => {
+      // Only called while the app is open, where the in-app banner and chime already cover it.
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+          shouldShowBanner: false,
+          shouldShowList: true,
+        }),
+      })
+
+      if (Platform.OS === 'android') {
+        // Omitting `sound` uses the device's default notification sound.
+        await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+          name: 'New orders',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+        })
       }
-    },
-  })
+
+      const current = await Notifications.getPermissionsAsync()
+      const granted =
+        current.granted ||
+        (await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowSound: true, allowBadge: false } }))
+          .granted
+
+      return granted ? Notifications : null
+    })
+    .catch(() => {
+      notifications = null
+      return null
+    })
+
+  return notifications
 }
 
-let prepared: Promise<boolean> | null = null
+let chime: AudioPlayer | null = null
+
+function getChime() {
+  if (!chime) {
+    // Don't stop music or calls the user has playing.
+    setAudioModeAsync({ interruptionMode: 'mixWithOthers' }).catch(() => {})
+    chime = createAudioPlayer(require('@/assets/sounds/new-order.wav'))
+  }
+  return chime
+}
 
 /**
- * Creates the Android channel (sound + vibration) and asks for permission. Without permission
- * the OS plays no sound, so this runs once after sign-in for roles that receive order alerts.
+ * Loads the chime and asks for notification permission. Runs once after sign-in for roles that
+ * receive order alerts, so the first order isn't silent.
  */
-export function prepareOrderAlerts(): Promise<boolean> {
-  if (!supported) return Promise.resolve(false)
-
-  prepared ??= (async () => {
-    if (Platform.OS === 'android') {
-      // Omitting `sound` uses the device's default notification sound.
-      await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-        name: 'New orders',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-      })
-    }
-
-    const current = await Notifications.getPermissionsAsync()
-    if (current.granted) return true
-
-    const requested = await Notifications.requestPermissionsAsync({
-      ios: { allowAlert: true, allowSound: true, allowBadge: false },
-    })
-    return requested.granted
-  })().catch(() => {
-    prepared = null
-    return false
-  })
-
-  return prepared
+export function prepareOrderAlerts() {
+  getChime()
+  void loadNotifications()
 }
 
-/** Plays the notification sound for a new order, with a system banner if the app is in the background. */
+/** Chimes in the foreground; in the background, posts a system notification with sound. */
 export async function playOrderAlert(order: OrderNotification) {
-  if (!(await prepareOrderAlerts())) return
+  if (AppState.currentState === 'active') {
+    const player = getChime()
+    await player.seekTo(0)
+    player.play()
+    return
+  }
+
+  const Notifications = await loadNotifications()
+  if (!Notifications) return
 
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -76,9 +105,19 @@ export async function playOrderAlert(order: OrderNotification) {
 
 /** Calls `onOpen` when the user taps an order notification. Returns an unsubscribe function. */
 export function onOrderAlertOpened(onOpen: () => void) {
-  if (!supported) return () => {}
-  const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-    if (response.notification.request.content.data?.orderId) onOpen()
+  let removed = false
+  let remove = () => {}
+
+  loadNotifications().then((Notifications) => {
+    if (!Notifications || removed) return
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      if (response.notification.request.content.data?.orderId) onOpen()
+    })
+    remove = () => subscription.remove()
   })
-  return () => subscription.remove()
+
+  return () => {
+    removed = true
+    remove()
+  }
 }
