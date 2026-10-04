@@ -60,7 +60,8 @@ export type Page<T> = { items: T[]; meta?: PageMeta }
 export const customerApi = createApi({
   reducerPath: 'customerApi',
   baseQuery,
-  tagTypes: ['Cart', 'Orders'],
+  // Owner endpoints are injected from owner-api.ts and share this cache.
+  tagTypes: ['Cart', 'Orders', 'OwnerOrders', 'OwnerListings', 'OwnerStats'],
   endpoints: (build) => ({
     getListings: build.query<Page<Listing>, ListingsArgs>({
       query: ({ type, search, ownerId, limit = 50 }) => ({

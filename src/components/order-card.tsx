@@ -19,11 +19,13 @@ type OrderCardProps = {
   status: OrderStatus
   time: string
   icon: IconName
+  /** Extra line under the items, e.g. the delivery address. */
+  details?: string
   /** Action buttons rendered in the card footer. */
   actions?: ReactNode
 }
 
-export function OrderCard({ id, title, items, total, status, time, icon, actions }: OrderCardProps) {
+export function OrderCard({ id, title, items, total, status, time, icon, details, actions }: OrderCardProps) {
   const theme = useTheme()
   return (
     <Card>
@@ -44,6 +46,11 @@ export function OrderCard({ id, title, items, total, status, time, icon, actions
         </ThemedText>
         <ThemedText type="smallBold">{formatPrice(total)}</ThemedText>
       </View>
+      {details ? (
+        <ThemedText type="caption" themeColor="textSecondary" numberOfLines={2}>
+          {details}
+        </ThemedText>
+      ) : null}
       {actions ? <View style={styles.actions}>{actions}</View> : null}
     </Card>
   )

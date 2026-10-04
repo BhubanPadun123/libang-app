@@ -1,11 +1,23 @@
-import RoleTabs from '@/components/navigation/role-tabs'
-import { isMerchantRole } from '@/constants/roles'
-import { getMerchantTabs } from '@/navigation/tabs'
-import { useAppSelector } from '@/store/hooks'
+import { Stack } from 'expo-router'
 
-/** Shared by store, restaurant, and room owners; tab labels adapt to the business type. */
+import { useTheme } from '@/hooks/use-theme'
+
+/** Tabs, plus the listing editor pushed over them with a native back header. */
 export default function MerchantLayout() {
-  const role = useAppSelector((s) => s.auth.user?.role)
-  if (!isMerchantRole(role)) return null
-  return <RoleTabs basePath="merchant" tabs={getMerchantTabs(role)} />
+  const theme = useTheme()
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShadowVisible: false,
+        headerStyle: { backgroundColor: theme.background },
+        headerTintColor: theme.primary,
+        headerTitleStyle: { color: theme.text },
+        headerBackButtonDisplayMode: 'minimal',
+        contentStyle: { backgroundColor: theme.background },
+      }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="listing" />
+    </Stack>
+  )
 }

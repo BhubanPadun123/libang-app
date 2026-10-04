@@ -5,6 +5,7 @@ import { AppState } from 'react-native'
 import { isMerchantRole, ordersRoute, type Role } from '@/constants/roles'
 import { onOrderAlertOpened, playOrderAlert, prepareOrderAlerts } from '@/services/order-alerts'
 import { RealtimeConnection, type RevokeReason } from '@/services/realtime'
+import { customerApi } from '@/store/customer-api'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { signOut } from '@/store/slices/auth-slice'
 import { connectionChanged, orderReceived } from '@/store/slices/notifications-slice'
@@ -43,6 +44,8 @@ export function useRealtime() {
       onOrderCreated: (order) => {
         if (!alerts) return
         dispatch(orderReceived(order))
+        // Owners' order list and stats come from the server; refetch whatever is on screen.
+        dispatch(customerApi.util.invalidateTags(['OwnerOrders', 'OwnerStats']))
         if (rung.has(order.id)) return
         rung.add(order.id)
         playOrderAlert(order).catch(() => {})

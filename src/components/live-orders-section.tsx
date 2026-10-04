@@ -1,10 +1,7 @@
-import { useFocusEffect } from 'expo-router'
-import { useCallback } from 'react'
-
 import { OrderCard } from '@/components/order-card'
 import { Section } from '@/components/ui/section'
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { ordersSeen } from '@/store/slices/notifications-slice'
+import { useClearOrderBadge } from '@/hooks/use-clear-order-badge'
+import { useAppSelector } from '@/store/hooks'
 
 function formatTime(iso: string) {
   const date = new Date(iso)
@@ -16,15 +13,8 @@ function formatTime(iso: string) {
  * unread badge, including for orders that arrive while it's open.
  */
 export function LiveOrdersSection({ title = 'Live orders' }: { title?: string }) {
-  const dispatch = useAppDispatch()
   const orders = useAppSelector((s) => s.notifications.liveOrders)
-  const unread = useAppSelector((s) => s.notifications.unreadCount)
-
-  useFocusEffect(
-    useCallback(() => {
-      if (unread > 0) dispatch(ordersSeen())
-    }, [unread, dispatch])
-  )
+  useClearOrderBadge()
 
   if (!orders.length) return null
 

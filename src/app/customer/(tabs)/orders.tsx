@@ -8,18 +8,11 @@ import { Button } from '@/components/ui/button'
 import { ChipGroup } from '@/components/ui/chip'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Screen } from '@/components/ui/screen'
-import type { OrderStatus } from '@/data/mock'
+import { formatOrderDate, OrderStatusLabel } from '@/constants/order-status'
 import { useGetOrdersQuery } from '@/store/customer-api'
-import type { CustomerOrder, ServerOrderStatus } from '@/types/catalog'
+import type { CustomerOrder } from '@/types/catalog'
 
 const Filters = ['Active', 'Past'] as const
-
-const StatusLabel: Record<ServerOrderStatus, OrderStatus> = {
-  PENDING: 'Pending',
-  CONFIRMED: 'Confirmed',
-  DELIVERED: 'Delivered',
-  CANCELLED: 'Cancelled',
-}
 
 const isActive = (o: CustomerOrder) => o.status === 'PENDING' || o.status === 'CONFIRMED'
 
@@ -28,15 +21,6 @@ function describeItems(order: CustomerOrder) {
   if (!first) return ''
   const label = first.quantity > 1 ? `${first.quantity}× ${first.name}` : first.name
   return rest.length ? `${label} +${rest.length} more` : label
-}
-
-function formatDate(iso: string) {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return ''
-  const sameDay = date.toDateString() === new Date().toDateString()
-  return sameDay
-    ? `Today, ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-    : date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default function CustomerOrdersScreen() {
@@ -55,8 +39,8 @@ export default function CustomerOrdersScreen() {
           title={o.items.length === 1 ? o.items[0].name : `${o.items.length} items`}
           items={describeItems(o)}
           total={o.totalAmount}
-          status={StatusLabel[o.status]}
-          time={formatDate(o.createdAt)}
+          status={OrderStatusLabel[o.status]}
+          time={formatOrderDate(o.createdAt)}
           icon={ListingIcon[o.items[0]?.listingType ?? 'PRODUCT']}
         />
       ))}
