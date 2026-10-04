@@ -1,46 +1,56 @@
 import { useState } from 'react'
 
-import { LiveOrdersSection } from '@/components/live-orders-section'
-import { OrderCard } from '@/components/order-card'
+import { AdminOrderCard } from '@/components/admin/admin-order-card'
+import { QueryStatus } from '@/components/catalog/query-status'
 import { ChipGroup } from '@/components/ui/chip'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Screen } from '@/components/ui/screen'
 import { SearchField } from '@/components/ui/search-field'
-import { CustomerOrders, type OrderStatus } from '@/data/mock'
+import { useClearOrderBadge } from '@/hooks/use-clear-order-badge'
+import { useGetAllOrdersQuery } from '@/store/admin-api'
+import type { ServerOrderStatus } from '@/types/catalog'
 
-const Filters = ['All', 'Pending', 'Preparing', 'On the way', 'Delivered', 'Cancelled'] as const
+const Filters = {
+  All: null,
+  Pending: 'PENDING',
+  Confirmed: 'CONFIRMED',
+  Delivered: 'DELIVERED',
+  Cancelled: 'CANCELLED',
+} as const satisfies Record<string, ServerOrderStatus | null>
+type Filter = keyof typeof Filters
 
 export default function AdminOrdersScreen() {
-  const [filter, setFilter] = useState<(typeof Filters)[number]>('All')
+  const [filter, setFilter] = useState<Filter>('All')
   const [query, setQuery] = useState('')
+  const orders = useGetAllOrdersQuery()
+  useClearOrderBadge()
+
   const q = query.trim().toLowerCase()
-  const orders = CustomerOrders.filter(
+  const status = Filters[filter]
+  const visible = (orders.data ?? []).filter(
     (o) =>
-      (filter === 'All' || o.status === (filter as OrderStatus)) &&
-      (!q || o.id.toLowerCase().includes(q) || o.vendor.toLowerCase().includes(q))
+      (!status || o.status === status) &&
+      (!q ||
+        o._id.toLowerCase().endsWith(q.replace('#', '')) ||
+        (o.deliveryAddress?.name ?? o.user?.name ?? '').toLowerCase().includes(q) ||
+        o.items.some((i) => (i.owner?.name ?? '').toLowerCase().includes(q)))
   )
 
   return (
-    <Screen title="Orders">
-      <LiveOrdersSection />
-      <SearchField value={query} onChangeText={setQuery} placeholder="Search by order ID or partner" />
-      <ChipGroup options={Filters} value={filter} onChange={setFilter} />
-      {orders.length ? (
-        orders.map((o) => (
-          <OrderCard
-            key={o.id}
-            id={o.id}
-            title={o.vendor}
-            items={o.items}
-            total={o.total}
-            status={o.status}
-            time={o.time}
-            icon={o.icon}
-          />
-        ))
-      ) : (
+    <Screen
+      title="Orders"
+      subtitle="Latest 50 orders"
+      onRefresh={orders.refetch}
+      refreshing={orders.isFetching && !orders.isLoading}>
+      <SearchField value={query} onChangeText={setQuery} placeholder="Order ID, customer or seller" />
+      <ChipGroup options={Object.keys(Filters) as Filter[]} value={filter} onChange={setFilter} />
+      <QueryStatus isLoading={orders.isLoading} error={orders.error} onRetry={orders.refetch} />
+      {visible.map((order) => (
+        <AdminOrderCard key={order._id} order={order} />
+      ))}
+      {orders.data && !visible.length ? (
         <EmptyState icon={{ sf: 'tray', md: 'inbox' }} title="No matching orders" />
-      )}
+      ) : null}
     </Screen>
   )
 }

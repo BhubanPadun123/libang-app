@@ -61,7 +61,7 @@ export const AdminTabs: RoleTab[] = [
 
 export const SuperAdminTabs: RoleTab[] = [
   { name: 'index', label: 'Dashboard', sf: 'chart.bar.fill', md: 'dashboard', showsOrderBadge: true },
-  { name: 'admins', label: 'Admins', sf: 'person.badge.shield.checkmark.fill', md: 'admin_panel_settings' },
+  { name: 'admins', label: 'Team', sf: 'person.badge.shield.checkmark.fill', md: 'admin_panel_settings' },
   { name: 'reports', label: 'Reports', sf: 'doc.text.fill', md: 'analytics' },
   { name: 'settings', label: 'Settings', sf: 'gearshape.fill', md: 'settings' },
   { name: 'account', label: 'Account', sf: 'person.crop.circle.fill', md: 'person' },

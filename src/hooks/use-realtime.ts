@@ -44,8 +44,8 @@ export function useRealtime() {
       onOrderCreated: (order) => {
         if (!alerts) return
         dispatch(orderReceived(order))
-        // Owners' order list and stats come from the server; refetch whatever is on screen.
-        dispatch(customerApi.util.invalidateTags(['OwnerOrders', 'OwnerStats']))
+        // Order lists and stats come from the server; refetch whichever are on screen.
+        dispatch(customerApi.util.invalidateTags(['OwnerOrders', 'OwnerStats', 'AdminOrders', 'AdminStats']))
         if (rung.has(order.id)) return
         rung.add(order.id)
         playOrderAlert(order).catch(() => {})

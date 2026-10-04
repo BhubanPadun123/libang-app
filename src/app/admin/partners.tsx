@@ -1,40 +1,49 @@
 import { useState } from 'react'
 
-import { Badge } from '@/components/ui/badge'
+import { BusinessCard, partnerStatus, type PartnerStatus } from '@/components/admin/business-card'
+import { QueryStatus } from '@/components/catalog/query-status'
 import { ChipGroup } from '@/components/ui/chip'
-import { ListCard, ListItem } from '@/components/ui/list-item'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Screen } from '@/components/ui/screen'
-import type { IconName } from '@/components/ui/icon'
-import { Partners } from '@/data/mock'
+import { SearchField } from '@/components/ui/search-field'
+import { useGetBusinessesQuery } from '@/store/admin-api'
 
-const Filters = ['All', 'Restaurant', 'Store', 'Rooms'] as const
-const TypeIcon: Record<string, IconName> = {
-  Restaurant: { sf: 'fork.knife', md: 'restaurant' },
-  Store: { sf: 'storefront.fill', md: 'storefront' },
-  Rooms: { sf: 'bed.double.fill', md: 'hotel' },
-}
-const StatusTone = { Active: 'success', Pending: 'warning', Suspended: 'danger' } as const
+const Filters = ['Submitted', 'Approved', 'Live', 'Rejected', 'Draft', 'All'] as const
+type Filter = (typeof Filters)[number]
 
 export default function AdminPartnersScreen() {
-  const [filter, setFilter] = useState<(typeof Filters)[number]>('All')
-  const partners = Partners.filter((p) => filter === 'All' || p.type === filter)
+  const [filter, setFilter] = useState<Filter>('Submitted')
+  const [query, setQuery] = useState('')
+  const result = useGetBusinessesQuery()
+
+  const live = new Set(result.data?.liveIds ?? [])
+  const q = query.trim().toLowerCase()
+  const businesses = (result.data?.businesses ?? []).filter((b) => {
+    const status: PartnerStatus = partnerStatus(b, live.has(b._id))
+    const text = [b.business.name, b.business.address?.city, b.owner?.name, b.owner?.phone].join(' ').toLowerCase()
+    return (filter === 'All' || status === filter) && (!q || text.includes(q))
+  })
+  const waiting = (result.data?.businesses ?? []).filter((b) => b.onboarding?.status === 'SUBMITTED').length
 
   return (
-    <Screen title="Partners" subtitle={`${Partners.length} registered`}>
+    <Screen
+      title="Partners"
+      subtitle={waiting ? `${waiting} waiting for review` : undefined}
+      onRefresh={result.refetch}
+      refreshing={result.isFetching && !result.isLoading}>
+      <SearchField value={query} onChangeText={setQuery} placeholder="Business, city or owner" />
       <ChipGroup options={Filters} value={filter} onChange={setFilter} />
-      <ListCard>
-        {partners.map((p) => (
-          <ListItem
-            key={p.id}
-            title={p.name}
-            subtitle={p.type}
-            icon={TypeIcon[p.type]}
-            iconTone="neutral"
-            trailing={<Badge label={p.status} tone={StatusTone[p.status]} />}
-            onPress={() => {}}
-          />
-        ))}
-      </ListCard>
+      <QueryStatus isLoading={result.isLoading} error={result.error} onRetry={result.refetch} />
+      {businesses.map((b) => (
+        <BusinessCard key={b._id} business={b} live={live.has(b._id)} />
+      ))}
+      {result.data && !businesses.length ? (
+        <EmptyState
+          icon={{ sf: 'storefront.fill', md: 'storefront' }}
+          title={filter === 'Submitted' && !q ? 'Nothing to review' : 'No matching partners'}
+          message={filter === 'Submitted' && !q ? 'New business applications will show up here.' : undefined}
+        />
+      ) : null}
     </Screen>
   )
 }
