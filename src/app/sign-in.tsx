@@ -9,11 +9,16 @@ import { RoleMeta } from '@/constants/role-meta'
 import { ROLES, RoleLabels, type Role } from '@/constants/roles'
 import { Radius, Spacing } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { signOutReasonCleared } from '@/store/slices/auth-slice'
 
 export default function SignInScreen() {
   const theme = useTheme()
+  const dispatch = useAppDispatch()
+  const signOutReason = useAppSelector((s) => s.auth.signOutReason)
 
   const handleSelect = (role: Role) => {
+    dispatch(signOutReasonCleared())
     router.push({ pathname: '/login', params: { role } })
   }
 
@@ -30,6 +35,17 @@ export default function SignInScreen() {
           Food, groceries, stores and stays — delivered fast.
         </ThemedText>
       </View>
+
+      {signOutReason ? (
+        <View
+          accessibilityRole="alert"
+          style={[styles.notice, { backgroundColor: theme.warningSoft }]}>
+          <Icon sf="exclamationmark.triangle.fill" md="warning" size={18} color={theme.warning} />
+          <ThemedText type="small" style={[styles.noticeText, { color: theme.warning }]}>
+            {signOutReason}
+          </ThemedText>
+        </View>
+      ) : null}
 
       <View style={styles.list}>
         <ThemedText type="smallBold" themeColor="textSecondary">
@@ -78,5 +94,15 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: Spacing.two,
+  },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+  },
+  noticeText: {
+    flex: 1,
   },
 })

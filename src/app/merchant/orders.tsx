@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { LiveOrdersSection } from '@/components/live-orders-section'
 import { OrderCard } from '@/components/order-card'
 import { Button } from '@/components/ui/button'
 import { ChipGroup } from '@/components/ui/chip'
@@ -22,6 +23,7 @@ export default function MerchantOrdersScreen() {
 
   return (
     <Screen title={isRooms ? 'Bookings' : 'Orders'}>
+      <LiveOrdersSection title={isRooms ? 'Live bookings' : 'Live orders'} />
       <ChipGroup options={Filters} value={filter} onChange={setFilter} />
       {orders.length ? (
         orders.map((o) => (

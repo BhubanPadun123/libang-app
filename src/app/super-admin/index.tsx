@@ -1,3 +1,4 @@
+import { LiveOrdersSection } from '@/components/live-orders-section'
 import { Avatar } from '@/components/ui/avatar'
 import { ListCard, ListItem } from '@/components/ui/list-item'
 import { Screen } from '@/components/ui/screen'
@@ -19,6 +20,8 @@ export default function SuperAdminDashboardScreen() {
           { label: 'Delivery partners', value: '418', icon: { sf: 'bicycle', md: 'two_wheeler' }, tone: 'warning' },
         ]}
       />
+
+      <LiveOrdersSection />
 
       <Section title="Recent activity">
         <ListCard>

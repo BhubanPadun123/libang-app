@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { MaxContentWidth, Spacing } from '@/constants/theme'
 import type { RoleTab } from '@/navigation/tabs'
+import { useAppSelector } from '@/store/hooks'
 
 type RoleTabsProps = {
   basePath: string
@@ -13,6 +14,8 @@ type RoleTabsProps = {
 }
 
 export default function RoleTabs({ basePath, tabs }: RoleTabsProps) {
+  const unread = useAppSelector((s) => s.notifications.unreadCount)
+
   return (
     <Tabs>
       <TabSlot style={{ height: '100%' }} />
@@ -24,7 +27,9 @@ export default function RoleTabs({ basePath, tabs }: RoleTabsProps) {
               name={tab.name}
               href={(tab.name === 'index' ? `/${basePath}` : `/${basePath}/${tab.name}`) as Href}
               asChild>
-              <TabButton>{tab.label}</TabButton>
+              <TabButton>
+                {tab.showsOrderBadge && unread > 0 ? `${tab.label} (${unread > 99 ? '99+' : unread})` : tab.label}
+              </TabButton>
             </TabTrigger>
           ))}
         </CustomTabList>

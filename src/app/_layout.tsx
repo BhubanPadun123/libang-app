@@ -2,12 +2,14 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useColorScheme } from 'react-native'
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
+import { LiveOrderToast } from '@/components/live-order-toast'
 import { PaperProvider } from 'react-native-paper'
 import { Provider } from 'react-redux'
 import { store } from '@/store'
 import { useAppSelector } from '@/store/hooks'
 import { isMerchantRole } from '@/constants/roles'
 import { Colors } from '@/constants/theme'
+import { useRealtime } from '@/hooks/use-realtime'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -28,6 +30,7 @@ export default function RootLayout() {
         <ThemeProvider value={colorScheme === 'dark' ? DarkNavTheme : LightNavTheme}>
           <AnimatedSplashOverlay />
           <RootNavigator />
+          <LiveOrderToast />
         </ThemeProvider>
       </PaperProvider>
     </Provider>
@@ -36,6 +39,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const role = useAppSelector((s) => s.auth.user?.role)
+  useRealtime()
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

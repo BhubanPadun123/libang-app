@@ -50,3 +50,16 @@ export async function login(email: string, password: string): Promise<Session> {
     token: data.accessToken,
   }
 }
+
+/**
+ * Ends the session on the server so the account can sign in elsewhere right away.
+ * Best effort: if it fails, the server frees the account once the heartbeat stops.
+ */
+export async function logout(token: string | null) {
+  if (!token) return
+  try {
+    await apiFetch('/api/auth/logout', { method: 'POST', token })
+  } catch {
+    // Signing out locally must never be blocked by the network.
+  }
+}

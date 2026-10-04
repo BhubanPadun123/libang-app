@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { LiveOrdersSection } from '@/components/live-orders-section'
 import { OrderCard } from '@/components/order-card'
 import { ChipGroup } from '@/components/ui/chip'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -21,6 +22,7 @@ export default function AdminOrdersScreen() {
 
   return (
     <Screen title="Orders">
+      <LiveOrdersSection />
       <SearchField value={query} onChangeText={setQuery} placeholder="Search by order ID or partner" />
       <ChipGroup options={Filters} value={filter} onChange={setFilter} />
       {orders.length ? (

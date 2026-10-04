@@ -8,6 +8,8 @@ export type RoleTab = {
   label: string
   sf: SFSymbol
   md: AndroidSymbol
+  /** Shows the live-order unread count on this tab. */
+  showsOrderBadge?: boolean
 }
 
 // Android's native tab bar shows at most 5 tabs — keep each list at 5 or fewer.
@@ -34,6 +36,7 @@ export function getMerchantTabs(role: MerchantRole): RoleTab[] {
       label: role === 'room_owner' ? 'Bookings' : 'Orders',
       sf: 'list.bullet.rectangle.fill',
       md: 'list_alt',
+      showsOrderBadge: true,
     },
     { name: 'catalog', ...merchantCatalog[role] },
     { name: 'earnings', label: 'Earnings', sf: 'banknote.fill', md: 'payments' },
@@ -50,14 +53,14 @@ export const DeliveryTabs: RoleTab[] = [
 
 export const AdminTabs: RoleTab[] = [
   { name: 'index', label: 'Dashboard', sf: 'chart.bar.fill', md: 'dashboard' },
-  { name: 'orders', label: 'Orders', sf: 'list.bullet.rectangle.fill', md: 'list_alt' },
+  { name: 'orders', label: 'Orders', sf: 'list.bullet.rectangle.fill', md: 'list_alt', showsOrderBadge: true },
   { name: 'partners', label: 'Partners', sf: 'storefront.fill', md: 'storefront' },
   { name: 'users', label: 'Users', sf: 'person.3.fill', md: 'group' },
   { name: 'account', label: 'Account', sf: 'person.crop.circle.fill', md: 'person' },
 ]
 
 export const SuperAdminTabs: RoleTab[] = [
-  { name: 'index', label: 'Dashboard', sf: 'chart.bar.fill', md: 'dashboard' },
+  { name: 'index', label: 'Dashboard', sf: 'chart.bar.fill', md: 'dashboard', showsOrderBadge: true },
   { name: 'admins', label: 'Admins', sf: 'person.badge.shield.checkmark.fill', md: 'admin_panel_settings' },
   { name: 'reports', label: 'Reports', sf: 'doc.text.fill', md: 'analytics' },
   { name: 'settings', label: 'Settings', sf: 'gearshape.fill', md: 'settings' },

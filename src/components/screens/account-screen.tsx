@@ -10,13 +10,21 @@ import { Screen } from '@/components/ui/screen'
 import { Section } from '@/components/ui/section'
 import { RoleLabels } from '@/constants/roles'
 import { Spacing } from '@/constants/theme'
+import { logout } from '@/services/auth-service'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { signOut } from '@/store/slices/auth-slice'
 
 /** Shared account tab used by every role. */
 export function AccountScreen() {
   const user = useAppSelector((s) => s.auth.user)
+  const token = useAppSelector((s) => s.auth.token)
   const dispatch = useAppDispatch()
+
+  const handleSignOut = () => {
+    // Sign out locally at once; the server call only frees the account for other devices.
+    void logout(token)
+    dispatch(signOut())
+  }
 
   if (!user) return null
 
@@ -50,7 +58,7 @@ export function AccountScreen() {
         label="Sign out"
         variant="danger"
         icon={{ sf: 'rectangle.portrait.and.arrow.right', md: 'logout' }}
-        onPress={() => dispatch(signOut())}
+        onPress={handleSignOut}
         block
       />
     </Screen>
