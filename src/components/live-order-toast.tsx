@@ -1,4 +1,4 @@
-import { router, type Href } from 'expo-router'
+import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, { SlideInUp, SlideOutUp } from 'react-native-reanimated'
@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components/themed-text'
 import { Icon } from '@/components/ui/icon'
 import { IconBubble } from '@/components/ui/icon-bubble'
-import { isMerchantRole, type Role } from '@/constants/roles'
+import { ordersRoute } from '@/constants/roles'
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -15,13 +15,6 @@ import { toastDismissed } from '@/store/slices/notifications-slice'
 import { formatPrice } from '@/utils/format'
 
 const VISIBLE_MS = 5_000
-
-function ordersRoute(role: Role | undefined): Href | null {
-  if (role === 'admin') return '/admin/orders'
-  if (role === 'super_admin') return '/super-admin'
-  if (isMerchantRole(role)) return '/merchant/orders'
-  return null
-}
 
 /** Banner that slides in from the top when a live order arrives. Tap to open the orders list. */
 export function LiveOrderToast() {

@@ -28,6 +28,14 @@ export function isMerchantRole(role: Role | undefined): role is MerchantRole {
   return role === 'store_owner' || role === 'restaurant_owner' || role === 'room_owner'
 }
 
+/** Where a live order alert takes each role that receives one. */
+export function ordersRoute(role: Role | undefined): Href | null {
+  if (role === 'admin') return '/admin/orders'
+  if (role === 'super_admin') return '/super-admin'
+  if (isMerchantRole(role)) return '/merchant/orders'
+  return null
+}
+
 /** Landing route for each role after sign-in. */
 export const RoleHome: Record<Role, Href> = {
   customer: '/customer',

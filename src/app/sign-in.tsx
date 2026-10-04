@@ -10,15 +10,15 @@ import { ROLES, RoleLabels, type Role } from '@/constants/roles'
 import { Radius, Spacing } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { signOutReasonCleared } from '@/store/slices/auth-slice'
+import { sessionEndedReasonCleared } from '@/store/slices/session-slice'
 
 export default function SignInScreen() {
   const theme = useTheme()
   const dispatch = useAppDispatch()
-  const signOutReason = useAppSelector((s) => s.auth.signOutReason)
+  const signOutReason = useAppSelector((s) => s.session.endedReason)
 
   const handleSelect = (role: Role) => {
-    dispatch(signOutReasonCleared())
+    dispatch(sessionEndedReasonCleared())
     router.push({ pathname: '/login', params: { role } })
   }
 
