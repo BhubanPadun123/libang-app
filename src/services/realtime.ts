@@ -1,10 +1,14 @@
-import { API_URL } from '@/services/api'
+import { getApiUrl } from '@/services/api'
 
 /**
  * WebSocket endpoint of the backend. Set EXPO_PUBLIC_WS_URL to override; otherwise it's
- * derived from API_URL (http → ws, https → wss) with the `/ws` path.
+ * derived from the API URL (http → ws, https → wss) with the `/ws` path.
  */
-export const WS_URL = (process.env.EXPO_PUBLIC_WS_URL || `${API_URL.replace(/^http/, 'ws')}/ws`).replace(/\/+$/, '')
+async function getWsUrl() {
+  const fromEnv = process.env.EXPO_PUBLIC_WS_URL
+  if (fromEnv) return fromEnv.replace(/\/+$/, '')
+  return `${(await getApiUrl()).replace(/^http/, 'ws')}/ws`
+}
 
 /** Close codes the server uses for auth failures. Neither is retried. */
 export const CloseCode = {
@@ -65,6 +69,7 @@ export class RealtimeConnection {
   private retryTimer: ReturnType<typeof setTimeout> | undefined
   private retryDelay = MIN_RETRY_MS
   private stopped = false
+  private resolving = false
 
   constructor(
     private readonly token: string,
@@ -72,11 +77,25 @@ export class RealtimeConnection {
   ) {}
 
   connect() {
-    if (this.stopped || this.isOpenOrConnecting()) return
+    if (this.stopped || this.isOpenOrConnecting() || this.resolving) return
     clearTimeout(this.retryTimer)
 
+    // The backend URL may still be being chosen (local vs production).
+    this.resolving = true
+    getWsUrl()
+      .then((url) => {
+        this.resolving = false
+        if (!this.stopped && !this.isOpenOrConnecting()) this.open(url)
+      })
+      .catch(() => {
+        this.resolving = false
+        this.scheduleReconnect()
+      })
+  }
+
+  private open(url: string) {
     // Browsers can't set headers on a WebSocket, so the token goes in the query string.
-    const socket = new WebSocket(`${WS_URL}?token=${encodeURIComponent(this.token)}`)
+    const socket = new WebSocket(`${url}?token=${encodeURIComponent(this.token)}`)
     this.socket = socket
 
     socket.onopen = () => {

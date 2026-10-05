@@ -1,28 +1,66 @@
 import Constants from 'expo-constants'
 import { Platform } from 'react-native'
 
+/** The live backend. Release builds always use it. */
+export const PRODUCTION_API_URL = 'https://www.libangexpress.in'
+
 const DEV_API_PORT = 3000
+const PROBE_TIMEOUT_MS = 2_500
+
+const trimSlash = (url: string) => url.replace(/\/+$/, '')
 
 /**
- * Base URL of the Next.js backend.
- *
- * Set EXPO_PUBLIC_API_URL to override. Otherwise, in development, the backend is
- * assumed to run on the same machine as Metro, so we reuse the host the device
- * already reaches Metro on (works for physical devices on the same Wi‑Fi and emulators).
+ * The backend on the developer's machine. Devices reach it on the same host they reach
+ * Metro on (physical devices on the same Wi-Fi, and emulators).
  */
-function resolveApiUrl() {
-  const fromEnv = process.env.EXPO_PUBLIC_API_URL
-  if (fromEnv) return fromEnv.replace(/\/+$/, '')
-
+function localApiUrl() {
   const host =
-    Platform.OS === 'web'
-      ? globalThis.location?.hostname
-      : Constants.expoConfig?.hostUri?.split(':')[0]
-
+    Platform.OS === 'web' ? globalThis.location?.hostname : Constants.expoConfig?.hostUri?.split(':')[0]
   return `http://${host || 'localhost'}:${DEV_API_PORT}`
 }
 
-export const API_URL = resolveApiUrl()
+/** Whether the local backend answers quickly; a cheap public endpoint keeps the probe light. */
+async function isReachable(baseUrl: string) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS)
+  try {
+    const response = await fetch(`${baseUrl}/api/settings`, { signal: controller.signal })
+    return response.ok
+  } catch {
+    return false
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+let resolved: Promise<string> | null = null
+
+/**
+ * Base URL of the Next.js backend:
+ * - EXPO_PUBLIC_API_URL, when set, always wins.
+ * - Release builds use PRODUCTION_API_URL.
+ * - In development, the local backend if it answers, otherwise PRODUCTION_API_URL.
+ *
+ * Decided once and cached; `forgetApiUrl` makes the next request decide again.
+ */
+export function getApiUrl(): Promise<string> {
+  resolved ??= (async () => {
+    const fromEnv = process.env.EXPO_PUBLIC_API_URL
+    if (fromEnv) return trimSlash(fromEnv)
+    if (!__DEV__) return PRODUCTION_API_URL
+
+    const local = localApiUrl()
+    if (await isReachable(local)) return local
+    console.info(`[api] Local backend at ${local} isn't reachable; using ${PRODUCTION_API_URL}`)
+    return PRODUCTION_API_URL
+  })()
+  return resolved
+}
+
+/** Called after a network failure, so a local server that went away (or came back) is noticed. */
+export function forgetApiUrl() {
+  resolved = null
+}
 
 const TIMEOUT_MS = 15_000
 
@@ -72,9 +110,11 @@ export async function apiFetchPage<T>(
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
+  const baseUrl = await getApiUrl()
+
   let response: Response
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(`${baseUrl}${path}`, {
       method,
       headers: {
         Accept: 'application/json',
@@ -85,7 +125,8 @@ export async function apiFetchPage<T>(
       signal: controller.signal,
     })
   } catch {
-    throw new ApiError(`Can't reach the server at ${API_URL}. Check that it's running and on the same network.`, 0)
+    forgetApiUrl()
+    throw new ApiError(`Can't reach the server at ${baseUrl}. Check your internet connection and try again.`, 0)
   } finally {
     clearTimeout(timeout)
   }
