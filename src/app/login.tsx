@@ -24,16 +24,18 @@ function isRole(value: unknown): value is Role {
 export default function LoginScreen() {
   const theme = useTheme()
   const dispatch = useAppDispatch()
-  const params = useLocalSearchParams<{ role?: string }>()
+  const params = useLocalSearchParams<{ role?: string; email?: string; registered?: string }>()
   const selectedRole = isRole(params.role) ? params.role : 'customer'
   const meta = RoleMeta[selectedRole]
 
   const passwordRef = useRef<TextInput>(null)
-  const [email, setEmail] = useState('')
+  // Prefilled when arriving straight from sign-up.
+  const [email, setEmail] = useState(params.email ?? '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const justRegistered = params.registered === '1'
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !loading
 
@@ -73,10 +75,19 @@ export default function LoginScreen() {
       </View>
 
       <Card style={styles.form}>
+        {justRegistered && !error ? (
+          <View accessibilityRole="alert" style={[styles.banner, { backgroundColor: theme.successSoft }]}>
+            <Icon sf="checkmark.circle.fill" md="check_circle" size={18} color={theme.success} />
+            <ThemedText type="small" style={[styles.bannerText, { color: theme.success }]}>
+              Account created! Sign in to continue.
+            </ThemedText>
+          </View>
+        ) : null}
+
         {error ? (
-          <View style={[styles.error, { backgroundColor: theme.dangerSoft }]}>
+          <View style={[styles.banner, { backgroundColor: theme.dangerSoft }]}>
             <Icon sf="exclamationmark.triangle.fill" md="error" size={18} color={theme.danger} />
-            <ThemedText type="small" style={[styles.errorText, { color: theme.danger }]}>
+            <ThemedText type="small" style={[styles.bannerText, { color: theme.danger }]}>
               {error}
             </ThemedText>
           </View>
@@ -130,6 +141,20 @@ export default function LoginScreen() {
 
         <Button label="Sign in" onPress={handleSubmit} loading={loading} disabled={!canSubmit} block />
       </Card>
+
+      {/* Only customers can sign up themselves; every other account is created by an admin. */}
+      {selectedRole === 'customer' ? (
+        <View style={styles.footer}>
+          <ThemedText type="small" themeColor="textSecondary">
+            New to LibangExpress?
+          </ThemedText>
+          <Pressable accessibilityRole="link" onPress={() => router.push('/register')} hitSlop={8}>
+            <ThemedText type="smallBold" style={{ color: theme.primary }}>
+              Create an account
+            </ThemedText>
+          </Pressable>
+        </View>
+      ) : null}
     </Screen>
   )
 }
@@ -159,14 +184,20 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.three,
   },
-  error: {
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
     padding: Spacing.three,
     borderRadius: Radius.md,
   },
-  errorText: {
+  bannerText: {
     flex: 1,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
 })

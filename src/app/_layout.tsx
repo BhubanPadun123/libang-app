@@ -10,6 +10,7 @@ import { useAppSelector } from '@/store/hooks'
 import { isMerchantRole } from '@/constants/roles'
 import { Colors } from '@/constants/theme'
 import { useRealtime } from '@/hooks/use-realtime'
+import { useRestoreSession } from '@/hooks/use-restore-session'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -28,12 +29,30 @@ export default function RootLayout() {
     <Provider store={store}>
       <PaperProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkNavTheme : LightNavTheme}>
-          <AnimatedSplashOverlay />
-          <RootNavigator />
-          <LiveOrderToast />
+          <AppShell />
         </ThemeProvider>
       </PaperProvider>
     </Provider>
+  )
+}
+
+/**
+ * Every launch starts on the splash, then `index` sends the user to their home screen or to
+ * sign-in. Until the saved session has been read nothing renders, so the native splash stays up
+ * and a signed-in user never glimpses the sign-in screen.
+ */
+function AppShell() {
+  const restored = useAppSelector((s) => s.auth.restored)
+  useRestoreSession()
+
+  if (!restored) return null
+
+  return (
+    <>
+      <AnimatedSplashOverlay />
+      <RootNavigator />
+      <LiveOrderToast />
+    </>
   )
 }
 
@@ -49,6 +68,7 @@ function RootNavigator() {
       <Stack.Protected guard={!role}>
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
       </Stack.Protected>
 
       <Stack.Protected guard={role === 'customer'}>

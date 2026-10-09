@@ -60,7 +60,8 @@
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location so riders can find your delivery address."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

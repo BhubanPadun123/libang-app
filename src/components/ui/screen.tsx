@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { ThemedText } from '@/components/themed-text'
@@ -33,32 +33,43 @@ export function Screen({
 
   return (
     <SafeAreaView edges={safeTop ? ['top'] : []} style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />
-          ) : undefined
-        }>
-        <View style={styles.inner}>
-          {title || headerRight ? (
-            <View style={styles.header}>
-              <View style={styles.headerText}>
-                {subtitle ? (
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {subtitle}
-                  </ThemedText>
-                ) : null}
-                {title ? <ThemedText style={styles.title}>{title}</ThemedText> : null}
+      {/*
+       * Keeps the focused input above the keyboard. iOS insets the scroll view and scrolls to the
+       * input itself; Android draws edge-to-edge, so the window no longer resizes for the keyboard
+       * and the scroll view has to shrink instead (Android then scrolls the focused input into view).
+       */}
+      <KeyboardAvoidingView
+        style={styles.safeArea}
+        behavior={Platform.OS === 'android' ? 'padding' : undefined}
+        enabled={Platform.OS === 'android'}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />
+            ) : undefined
+          }>
+          <View style={styles.inner}>
+            {title || headerRight ? (
+              <View style={styles.header}>
+                <View style={styles.headerText}>
+                  {subtitle ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {subtitle}
+                    </ThemedText>
+                  ) : null}
+                  {title ? <ThemedText style={styles.title}>{title}</ThemedText> : null}
+                </View>
+                {headerRight}
               </View>
-              {headerRight}
-            </View>
-          ) : null}
-          {children}
-        </View>
-      </ScrollView>
+            ) : null}
+            {children}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }

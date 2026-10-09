@@ -1,7 +1,8 @@
-import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit'
+import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit'
 import { customerApi } from './customer-api'
 import appReducer from './slices/app-slice'
-import authReducer, { signOut } from './slices/auth-slice'
+import { clearSession, saveSession } from '@/services/session-storage'
+import authReducer, { signIn, signOut, userRefreshed } from './slices/auth-slice'
 import notificationsReducer from './slices/notifications-slice'
 import sessionReducer from './slices/session-slice'
 
@@ -14,6 +15,22 @@ clearOnSignOut.startListening({
   },
 })
 
+// Keeps the device's saved session in step with sign-in, so the next launch skips the login screen.
+const persistSession = createListenerMiddleware()
+persistSession.startListening({
+  matcher: isAnyOf(signIn, userRefreshed),
+  effect: (_, api) => {
+    const { user, token } = (api.getState() as RootState).auth
+    if (user && token) saveSession({ user, token })
+  },
+})
+persistSession.startListening({
+  actionCreator: signOut,
+  effect: () => {
+    clearSession()
+  },
+})
+
 export const store = configureStore({
   reducer: {
     app: appReducer,
@@ -22,7 +39,7 @@ export const store = configureStore({
     session: sessionReducer,
     [customerApi.reducerPath]: customerApi.reducer,
   },
-  middleware: (getDefault) => getDefault().prepend(clearOnSignOut.middleware).concat(customerApi.middleware),
+  middleware: (getDefault) => getDefault().prepend(clearOnSignOut.middleware, persistSession.middleware).concat(customerApi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>
